@@ -31,7 +31,7 @@ def parse_arguments():
         help="When set, this argument ",
         default="mrcnn-car"
     )
-    parser.add_argument(
+    parser.add_argument(q q q
         "-i",
         "--instance_type",
         type=str,

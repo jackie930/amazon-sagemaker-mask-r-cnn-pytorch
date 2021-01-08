@@ -99,4 +99,3 @@ pool = mul.Pool(5)
 rel = pool.map(infer, ['end/test2.jpg','end/test.jpg','end/test2.jpg','end/test2.jpg','end/test2.jpg','end/test2.jpg'])
 print(rel)
 ~~~~
-
