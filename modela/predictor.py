@@ -18,6 +18,7 @@ import itertools
 import cv2
 import skimage.io
 import torch
+import GPUtil
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -87,7 +88,7 @@ def invocations():
 
     model = models.resnet18()
     num_ftrs = model.fc.in_features
-    model.fc = nn.Linear(num_ftrs, 6)
+    model.fc = nn.Linear(num_ftrs, 3)
     model.load_state_dict(copy.deepcopy(torch.load("./model.pth", device)))
     model = model.to(device)
     model.eval()
@@ -107,7 +108,7 @@ def invocations():
     output = model(t2)
     idx = torch.argmax(output)
 
-    classes = ['否-有车损', '否-没有车损', '是-有车损', '是-没有车损', '零件-有车损', '零件-没有车损']
+    classes = classes = ['否', '是', '零件']
     label = classes [idx]
 
     # output is a list of dict, containing the postprocessed predictions
@@ -121,5 +122,11 @@ def invocations():
         'result': result
     }
     _payload = json.dumps(inference_result, ensure_ascii=False)
+    #show gpu utli
+    GPUtil.showUtilization()
+    #release gpu memory
+    torch.cuda.empty_cache()
+    GPUtil.showUtilization()
+
 
     return flask.Response(response=_payload, status=200, mimetype='application/json')

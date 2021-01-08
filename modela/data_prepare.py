@@ -9,7 +9,7 @@ from shutil import copyfile
 
 def make_dirs(target_folder):
     for j in ['train','val']:
-        for i in ['是-有车损','是-没有车损','否-有车损','否-没有车损','零件-有车损','零件-没有车损']:
+        for i in ['是','否','零件']:
             folder = os.path.join(target_folder,j,i)
             os.makedirs(folder, exist_ok=True)
 
@@ -40,18 +40,12 @@ def prepare(labelfile,target_folder):
         else:
             flag = 'val'
 
-        if annotations_all[i]['A-车']=='是' and annotations_all[i]['B-损']=='有车损':
-            copyfile(org_file_path, os.path.join(target_folder,flag,'是-有车损',file_name))
-        elif annotations_all[i]['A-车']=='是' and annotations_all[i]['B-损']=='没有车损':
-            copyfile(org_file_path, os.path.join(target_folder,flag,'是-没有车损',file_name))
-        elif annotations_all[i]['A-车']=='否' and annotations_all[i]['B-损']=='有车损':
-            copyfile(org_file_path, os.path.join(target_folder,flag,'否-有车损',file_name))
-        elif annotations_all[i]['A-车']=='否' and annotations_all[i]['B-损']=='没有车损':
-            copyfile(org_file_path, os.path.join(target_folder,flag,'否-没有车损',file_name))
-        elif annotations_all[i]['A-车']=='零件' and annotations_all[i]['B-损']=='有车损':
-            copyfile(org_file_path, os.path.join(target_folder,flag,'零件-有车损',file_name))
-        elif annotations_all[i]['A-车']=='零件' and annotations_all[i]['B-损']=='没有车损':
-            copyfile(org_file_path, os.path.join(target_folder,flag,'零件-没有车损',file_name))
+        if annotations_all[i]['A-车']=='是':
+            copyfile(org_file_path, os.path.join(target_folder,flag,'是',file_name))
+        elif annotations_all[i]['A-车']=='否':
+            copyfile(org_file_path, os.path.join(target_folder,flag,'否',file_name))
+        elif annotations_all[i]['A-车']=='零件':
+            copyfile(org_file_path, os.path.join(target_folder,flag,'零件',file_name))
         else:
             print (annotations_all[i])
         pbar.update(int((i / (total - 1)) * 100))
