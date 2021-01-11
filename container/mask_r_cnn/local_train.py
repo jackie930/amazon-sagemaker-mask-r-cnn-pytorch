@@ -6,17 +6,28 @@
 
 from __future__ import print_function
 from helper import *
+from engine import evaluate
 
 # The function to execute the training.
 def train(root_train_data):
     print('Starting the training.')
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # num_classes = int(trainingParams['num_classes'])
-    num_classes = 2 + 1
-    dataset = PennFudanDataset(root_train_data, get_transform(train=True))
+    num_classes = 30 + 1
+    dataset = LianbaoDataset(root_train_data, get_transform(train=True))
+    dataset_test = LianbaoDataset(root_train_data, get_transform(train=False))
+
+    # split the dataset in train and test set
+    indices = torch.randperm(len(dataset)).tolist()
+    dataset = torch.utils.data.Subset(dataset, indices[:-50])
+    dataset_test = torch.utils.data.Subset(dataset_test, indices[-50:])
 
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=2, shuffle=True, num_workers=4,
                                               collate_fn=utils.collate_fn)
+    data_loader_test = torch.utils.data.DataLoader(
+        dataset_test, batch_size=1, shuffle=False, num_workers=4,
+        collate_fn=utils.collate_fn)
+
     model = get_model_instance_segmentation(num_classes)
 
     # move model to the right device
@@ -32,7 +43,7 @@ def train(root_train_data):
                                            gamma=0.1)
 
     # let's train it for 10 epochs
-    num_epochs = 10
+    num_epochs = 2
 
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
@@ -42,6 +53,8 @@ def train(root_train_data):
         # evaluate on the test dataset
         #evaluate(model, data_loader_test, device=device)
 
+    # evaluate on the test dataset
+    evaluate(model, data_loader_test, device=device)
 
     # save the model
     torch.save(model.state_dict(), os.path.join('./save_model', 'mask_rcnn_model_saved'))
@@ -49,6 +62,6 @@ def train(root_train_data):
     print('Training complete.')
 
 if __name__ == '__main__':
-    train('../../PennFudanPed')
+    train('../../modelb')
 
 
