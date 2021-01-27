@@ -112,6 +112,152 @@ class LianbaoDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.imgs)
 
+class LianbaoDatasetModelC(torch.utils.data.Dataset):
+    # assume the each contains one label file for one pic, inside two folders with same name
+    def __init__(self, root, transforms=None):
+        self.root = root
+        self.transforms = transforms
+        # load all image files, sorting them to
+        # ensure that they are aligned
+        self.imgs = list(sorted(os.listdir(os.path.join(root, "pic"))))
+        self.labels = list(sorted(os.listdir(os.path.join(root, "label"))))
+        if '.ipynb_checkpoints' in self.imgs:
+            self.imgs.remove('.ipynb_checkpoints')
+        if '.ipynb_checkpoints' in self.labels:
+            self.labels.remove('.ipynb_checkpoints')
+
+    def __getitem__(self, idx):
+        #print ("<<< idx", idx)
+        img_path = os.path.join(self.root, "pic", self.imgs[idx])
+        #print ("<<< img_path ", img_path )
+        label_path = os.path.join(self.root, "label", self.labels[idx])
+        #print("<<< label_path ", label_path)
+        img = Image.open(img_path).convert("RGB")
+        width, height = img.size
+
+        annotations = json.load(open(label_path))
+        # annotations = list(annotations.values())  # don't need the dict keys
+        # annotations = [a for a in annotations if a['regions']]
+
+        # only include polygons
+        objs = [i for i in annotations['regions'] if i['shape_attributes']['name'] == 'polygon']
+
+        errors = ['A-1-前保险杠',
+                  'A-2-前保险杠格栅（下）',
+                  'A-3-前大灯（右）',
+                  'A-4-前大灯（左）',
+                  'A-5-中网',
+                  'B-6-后保险杠',
+                  'B-7-后保险杠装饰灯（右）',
+                  'B-8-后保险杠装饰灯（左）',
+                  'B-9-尾灯',
+                  'B-10-尾灯（右）',
+                  'B-11-尾灯（左）',
+                  'B-12-内尾灯（左）',
+                  'B-13-内尾灯（右）',
+                  'B-14-外尾灯（左）',
+                  'B-15-外尾灯（右）',
+                  'C-16-前挡风玻璃',
+                  'D-17-后挡风玻璃',
+                  'E-18-车顶',
+                  'F-19-引擎盖',
+                  'G-20-行李箱盖',
+                  'H-21-钢圈',
+                  'I-22-前叶子板（左）',
+                  'I-23-前轮眉（左）',
+                  'J-24-前叶子板（右）',
+                  'J-25-前轮眉（右）',
+                  'K-26-底大边（左）',
+                  'K-27-前立柱（左）',
+                  'K-28-后立柱（左）',
+                  'L-29-底大边（右）',
+                  'L-30-前立柱（右）',
+                  'L-31-后立柱（右）',
+                  'M-32-后叶子板（左）',
+                  'M-33-后轮眉（左）',
+                  'N-34-后叶子板（右）',
+                  'N-35-后轮眉（右）',
+                  'O-36-前门（左）',
+                  'O-37-前门玻璃（左）',
+                  'O-38-前门外拉手（左）',
+                  'P-39-前门（右）',
+                  'P-40-前门玻璃（右）',
+                  'P-41-前门外拉手（右）',
+                  'Q-42-后门（左）',
+                  'Q-43-后门玻璃（左）',
+                  'Q-44-后门外拉手（左）',
+                  'R-45-后门（右）',
+                  'R-46-后门玻璃（右）',
+                  'R-47-后门外拉手（右）',
+                  'S-48-倒车镜（左）',
+                  'T-49-倒车镜（右）',
+                  'Z-99-其它']
+
+        class_dict = {}
+        for i in errors:
+            class_dict[i] = errors.index(i) + 1
+
+        # 获取每个mask的边界框坐标
+        num_objs = len(objs)
+        boxes = []
+        classes = []
+        masks = []
+        for i in range(num_objs):
+            try:
+                xmin = np.min(objs[i]['shape_attributes']['all_points_x'])
+                xmax = np.max(objs[i]['shape_attributes']['all_points_x'])
+                ymin = np.min(objs[i]['shape_attributes']['all_points_y'])
+                ymax = np.max(objs[i]['shape_attributes']['all_points_y'])
+                boxes.append([xmin, ymin, xmax, ymax])
+                #assert box shape
+                c_type = objs[i]['region_attributes']['C-外观零部件']
+                # error fix
+                c_type = error_fix(c_type)
+                classes.append(c_type)
+
+                # convert masks
+                # Create an empty mask and then fill in the polygons
+                mask = np.zeros([width, height])
+                a3 = vim_to_labels(objs[i]['shape_attributes'])
+                cv2.fillPoly(mask, a3, 1)
+                masks.append(mask)
+            except:
+                print("annotations: ", annotations)
+                print("<<< objs", i, objs[i])
+
+        # 将所有转换为torch.Tensor
+        boxes = torch.as_tensor(boxes, dtype=torch.float32)
+        labels = torch.as_tensor([class_dict[i] for i in classes], dtype=torch.int64)
+
+        masks = torch.as_tensor(masks, dtype=torch.uint8)
+
+        image_id = torch.tensor([idx])
+        iscrowd = torch.zeros((num_objs,), dtype=torch.int64)
+        area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
+        # make sure below happends to avoid nan box loss, refer to https://github.com/pytorch/vision/issues/997
+        keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
+        boxes = boxes[keep]
+        labels = labels[keep]
+        masks = masks[keep]
+        area = area[keep]
+        iscrowd = iscrowd[keep]
+
+        target = {}
+        target["boxes"] = boxes
+        target["labels"] = labels
+        target["masks"] = masks
+        target["image_id"] = image_id
+        target["area"] = area
+        target["iscrowd"] = iscrowd
+
+        if self.transforms is not None:
+            img, target = self.transforms(img, target)
+
+        return img, target
+
+    def __len__(self):
+        return len(self.imgs)
+
 
 class PennFudanDataset(torch.utils.data.Dataset):
     def __init__(self, root, transforms=None):
@@ -179,6 +325,11 @@ class PennFudanDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.imgs)
 
+def error_fix(x):
+    if x =='A-2-前保险杠隔栅（下）':
+        return "A-2-前保险杠格栅（下）"
+    else:
+        return x
 
 def vim_to_labels(obj):
     res = []
