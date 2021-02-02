@@ -8,13 +8,36 @@ from __future__ import print_function
 import os
 from helper import *
 from engine import evaluate
+import argparse
 from torch.utils.tensorboard import SummaryWriter
 
+def init_args():
+    """
+    参数初始化
+    :return: None
+    """
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-r', '--root_train_data', type=str,
+                        help='Directory containing train data')
+    parser.add_argument('-m', '--model_type', type=str,
+                        help='model type, can be modelb/modelc/modelc_sub')
+    parser.add_argument('-n', '--num_epochs', type=int,
+                        help='train epoch')
+    parser.add_argument('-s', '--save_path', type=str,
+                        help='Path to logs and ckpt models')
+
+    return parser.parse_args()
+
 # The function to execute the training.
-def train(root_train_data,model_type, num_epochs):
+def train(root_train_data,model_type, num_epochs,save_path):
     #preprocess
     print('Starting preprocessing')
-    preprocess(root_train_data)
+    try:
+        preprocess(root_train_data)
+    except:
+        pass
+
     print('Starting the training.')
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     # num_classes = int(trainingParams['num_classes'])
@@ -57,11 +80,10 @@ def train(root_train_data,model_type, num_epochs):
                                            gamma=0.1)
 
     # let's train it for 10 epochs
-    writer = SummaryWriter()
 
     for epoch in range(num_epochs):
         # train for one epoch, printing every 10 iterations
-        train_one_epoch(model, optimizer, data_loader, device, epoch, writer, print_freq=10)
+        train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq=10)
         # update the learning rate
         lr_scheduler.step()
         # evaluate on the test dataset
@@ -71,7 +93,8 @@ def train(root_train_data,model_type, num_epochs):
     evaluate(model, data_loader_test, device=device)
 
     # save the model
-    torch.save(model.state_dict(), os.path.join('./save_model', 'mask_rcnn_model_saved_test'))
+    os.makedirs(save_path, exist_ok=True)
+    torch.save(model.state_dict(), os.path.join(save_path, 'mask_rcnn_model_saved_test'))
 
     print('Training complete.')
 
@@ -108,8 +131,13 @@ def preprocess(root):
         exit()
 
 if __name__ == '__main__':
-    train('../../data/modelc_sub','modelc_sub',2)
-    #train('../../data/modelc','modelc',2)
+    # init args
+    args = init_args()
+    print('start------------------------------------ train ')
+    train(root_train_data=args.root_train_data,
+          model_type=args.model_type,
+          num_epochs=args.num_epochs,
+          save_path=args.save_path)
 
 
 
