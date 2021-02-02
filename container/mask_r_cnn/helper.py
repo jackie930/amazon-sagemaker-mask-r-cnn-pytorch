@@ -96,6 +96,15 @@ class LianbaoDataset(torch.utils.data.Dataset):
         iscrowd = torch.zeros((num_objs,), dtype=torch.int64)
         area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
 
+        # make sure below happends to avoid nan box loss, refer to https://github.com/pytorch/vision/issues/997
+        keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
+        boxes = boxes[keep]
+        labels = labels[keep]
+        masks = masks[keep]
+        area = area[keep]
+        iscrowd = iscrowd[keep]
+
+
         target = {}
         target["boxes"] = boxes
         target["labels"] = labels
@@ -258,6 +267,106 @@ class LianbaoDatasetModelC(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.imgs)
 
+class LianbaoDatasetModelC_sub(torch.utils.data.Dataset):
+    # assume the each contains one label file for one pic, inside two folders with same name
+    def __init__(self, root, transforms=None):
+        self.root = root
+        self.transforms = transforms
+        # load all image files, sorting them to
+        # ensure that they are aligned
+        self.imgs = list(sorted(os.listdir(os.path.join(root, "pic"))))
+        self.labels = list(sorted(os.listdir(os.path.join(root, "label"))))
+        if '.ipynb_checkpoints' in self.imgs:
+            self.imgs.remove('.ipynb_checkpoints')
+        if '.ipynb_checkpoints' in self.labels:
+            self.labels.remove('.ipynb_checkpoints')
+
+    def __getitem__(self, idx):
+        #print ("<<< idx", idx)
+        img_path = os.path.join(self.root, "pic", self.imgs[idx])
+        #print ("<<< img_path ", img_path )
+        label_path = os.path.join(self.root, "label", self.labels[idx])
+        #print("<<< label_path ", label_path)
+        img = Image.open(img_path).convert("RGB")
+        width, height = img.size
+
+        annotations = json.load(open(label_path))
+        # annotations = list(annotations.values())  # don't need the dict keys
+        # annotations = [a for a in annotations if a['regions']]
+
+        # only include polygons
+        objs = [i for i in annotations['regions'] if i['shape_attributes']['name'] == 'polygon']
+
+        errors = ['A-1-前保险杠',
+                  'A-3-前大灯（右）',
+                  'A-4-前大灯（左）',
+                  'F-19-引擎盖',
+                  'H-21-钢圈']
+
+        class_dict = {}
+        for i in errors:
+            class_dict[i] = errors.index(i) + 1
+
+        # 获取每个mask的边界框坐标
+        num_objs = len(objs)
+        boxes = []
+        classes = []
+        masks = []
+        for i in range(num_objs):
+            try:
+                xmin = np.min(objs[i]['shape_attributes']['all_points_x'])
+                xmax = np.max(objs[i]['shape_attributes']['all_points_x'])
+                ymin = np.min(objs[i]['shape_attributes']['all_points_y'])
+                ymax = np.max(objs[i]['shape_attributes']['all_points_y'])
+                boxes.append([xmin, ymin, xmax, ymax])
+                #assert box shape
+                c_type = objs[i]['region_attributes']['C-外观零部件']
+                # error fix
+                c_type = error_fix(c_type)
+                classes.append(c_type)
+
+                # convert masks
+                # Create an empty mask and then fill in the polygons
+                mask = np.zeros([width, height])
+                a3 = vim_to_labels(objs[i]['shape_attributes'])
+                cv2.fillPoly(mask, a3, 1)
+                masks.append(mask)
+            except:
+                print("annotations: ", annotations)
+                print("<<< objs", i, objs[i])
+
+        # 将所有转换为torch.Tensor
+        boxes = torch.as_tensor(boxes, dtype=torch.float32)
+        labels = torch.as_tensor([class_dict[i] for i in classes], dtype=torch.int64)
+
+        masks = torch.as_tensor(masks, dtype=torch.uint8)
+
+        image_id = torch.tensor([idx])
+        iscrowd = torch.zeros((num_objs,), dtype=torch.int64)
+        area = (boxes[:, 3] - boxes[:, 1]) * (boxes[:, 2] - boxes[:, 0])
+        # make sure below happends to avoid nan box loss, refer to https://github.com/pytorch/vision/issues/997
+        keep = (boxes[:, 3] > boxes[:, 1]) & (boxes[:, 2] > boxes[:, 0])
+        boxes = boxes[keep]
+        labels = labels[keep]
+        masks = masks[keep]
+        area = area[keep]
+        iscrowd = iscrowd[keep]
+
+        target = {}
+        target["boxes"] = boxes
+        target["labels"] = labels
+        target["masks"] = masks
+        target["image_id"] = image_id
+        target["area"] = area
+        target["iscrowd"] = iscrowd
+
+        if self.transforms is not None:
+            img, target = self.transforms(img, target)
+
+        return img, target
+
+    def __len__(self):
+        return len(self.imgs)
 
 class PennFudanDataset(torch.utils.data.Dataset):
     def __init__(self, root, transforms=None):

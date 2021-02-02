@@ -26,6 +26,10 @@ def train(root_train_data,model_type, num_epochs):
         num_classes = 50 + 1
         dataset = LianbaoDatasetModelC(root_train_data, get_transform(train=True))
         dataset_test = LianbaoDatasetModelC(root_train_data, get_transform(train=False))
+    elif model_type=='modelc_sub':
+        num_classes = 5 + 1
+        dataset = LianbaoDatasetModelC_sub(root_train_data, get_transform(train=True))
+        dataset_test = LianbaoDatasetModelC_sub(root_train_data, get_transform(train=False))
 
     # split the dataset in train and test set
     indices = torch.randperm(len(dataset)).tolist()
@@ -104,7 +108,8 @@ def preprocess(root):
         exit()
 
 if __name__ == '__main__':
-    train('../../data/modelc','modelc',2)
+    train('../../data/modelc_sub','modelc_sub',2)
+    #train('../../data/modelc','modelc',2)
 
 
 
