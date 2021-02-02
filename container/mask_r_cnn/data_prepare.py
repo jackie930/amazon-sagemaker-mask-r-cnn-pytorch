@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 
 def make_dirs(target_folder):
-    for i in ['label_sub','pic']:
+    for i in ['label','pic']:
         folder = os.path.join(target_folder,i)
         os.makedirs(folder, exist_ok=True)
 
@@ -111,7 +111,7 @@ def prepare_modelc_sub(labelfile,target_folder):
                 (filepath, tempfilename) = os.path.split(tempfilename)
                 (filename, extension) = os.path.splitext(tempfilename)
 
-                json_name = os.path.join(target_folder,filename+'.json')
+                json_name = os.path.join(target_folder,'label',filename+'.json')
                 print (filename)
                 print (json_name)
                 with open(json_name, 'w') as outfile:
@@ -176,13 +176,13 @@ if __name__ == '__main__':
     #origin 1000
     #prepare('/Users/liujunyi/Desktop/spottag/customer/联保/1000b-tag.json',target_folder)
     #modelb
-    prepare_modelb('/Users/liujunyi/Desktop/spottag/customer/联保/label-3/cubiao.json',
-                   '/Users/liujunyi/Desktop/spottag/customer/联保/label-3/modelb')
+    prepare_modelb('../../data/modelb/cubiao.json',
+                   '../../data/modelb')
 
 
     #model c
-    #prepare_modelc_sub('/Users/liujunyi/Desktop/spottag/customer/联保/label-3/jingbiao.json',
-     #                  '/Users/liujunyi/Desktop/spottag/customer/联保/label-3/modelc')
+    prepare_modelc_sub('../../data/modelc/jingbiao.json',
+                       '../../data/modelc')
     #make_dirs(target_folder)
     #describe distributions
     #distribution_describe('/Users/liujunyi/Desktop/spottag/customer/联保/label-3/jingbiao.json')
