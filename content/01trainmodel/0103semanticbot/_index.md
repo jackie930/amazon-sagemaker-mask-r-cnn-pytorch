@@ -15,7 +15,7 @@ pre = "<b>4.2 </b>"
 
 ### 下载代码
 ```sh
-cd SagemMaker && git clone https://github.com/jackie930/amazon-sagemaker-mask-r-cnn-pytorch.git
+cd SageMaker && git clone https://github.com/jackie930/amazon-sagemaker-mask-r-cnn-pytorch.git
 ```
 
 ### 下载数据
