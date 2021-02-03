@@ -26,8 +26,8 @@ mkdir data && cd data
 #download file (todo: change access)
 wget s3://lianbao-mask-rcnn/modelb/modelc.zip
 
-#untar 
-tar -zxvf modelc.zip
+#unzip
+unzip modelc.zip
 ```
 
 运行后，你可以看到对应的文件目录
@@ -45,7 +45,7 @@ tar -zxvf modelc.zip
 ```sh
 source activate pytorch_p36
 pip install pycocotools tensorboard
-cd container/mask_r_cnn
+cd ../container/mask_r_cnn
 python local_train.py \
   --root_train_data='../../data/modelc' \
   --model_type='modelc_sub' \
