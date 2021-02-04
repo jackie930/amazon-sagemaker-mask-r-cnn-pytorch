@@ -5,7 +5,7 @@ import cv2
 import torch
 import torchvision
 
-def overlay_class_names(image, predictions, class_dict):
+def overlay_class_names(image, save_path, predictions, class_dict):
     """
         Adds detected class names and scores in the positions defined by the
         top-left corner of the predicted bounding box
@@ -26,7 +26,7 @@ def overlay_class_names(image, predictions, class_dict):
         s = template.format(label, score)
         cv2.putText(image, s, (x, y), cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1)
 
-    cv2.imwrite('./res.jpg', image)
+    cv2.imwrite(save_path, image)
 
     return image
 
@@ -42,7 +42,7 @@ def compute_colors_for_labels(labels, palette=None):
         return colors
 
 
-def overlay_boxes(image, predictions):
+def overlay_boxes(image, save_path, predictions):
     """
         Adds the predicted boxes on top of the image
         Arguments:
@@ -60,12 +60,12 @@ def overlay_boxes(image, predictions):
             image, tuple(top_left), tuple(bottom_right), tuple(color), 1
         )
 
-    cv2.imwrite('./res_bbox.jpg', image)
+    cv2.imwrite(save_path, image)
 
     return image
 
 
-def overlay_mask(image, predictions):
+def overlay_mask(image, save_path, predictions):
     """
         Adds the instances contours for each predicted object.
         Each label has a different color.
@@ -86,7 +86,7 @@ def overlay_mask(image, predictions):
 
     composite = image
 
-    cv2.imwrite('./res_mask.jpg', composite)
+    cv2.imwrite(save_path, composite)
 
     return composite
 
@@ -97,7 +97,8 @@ def select_top_predictions(predictions, threshold):
         new_predictions[k] = v[idx]
     return new_predictions
 
-def main(num_classes,model_path,img_path):
+def main(num_classes,model_path,img_path,save_folder):
+
     model = get_model_instance_segmentation(num_classes)
     # device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     device = torch.device('cpu')
@@ -115,13 +116,26 @@ def main(num_classes,model_path,img_path):
     print ("precition: ", top_predictions)
     #visulize
     cv_img = np.array(image)
-    result = overlay_boxes(cv_img, top_predictions)
-    result = overlay_mask(result, top_predictions)
 
+    #mkdir for sub folders
+    (filepath, tempfilename) = os.path.split(img_path)
+    os.makedirs(os.path.join(save_folder,'box'), exist_ok=True)
+    os.makedirs(os.path.join(save_folder, 'mask'), exist_ok=True)
+    save_path_mask = os.path.join(save_folder,'mask',tempfilename)
+    save_path_box = os.path.join(save_folder,'box',tempfilename)
+    result = overlay_boxes(cv_img, save_path_box, top_predictions)
+    result = overlay_mask(result, save_path_mask, top_predictions)
 
+def main_folder(num_classes,model_path,img_folder,save_folder):
+    for i in os.listdir(img_folder)[:50]:
+        try:
+            main(num_classes, model_path, os.path.join(img_folder,i), save_folder)
+            print ("<<<<process finish for : ", i)
+        except:
+            pass
 
 if __name__ == '__main__':
-    main(51, './save_model/mask_rcnn_model_saved_test', '../../data/modelc/pic/10080.JPG', )
+    main_folder(31, '../../models/modelb/modelb', '../../data/modelb/pic', './res')
 
 
 

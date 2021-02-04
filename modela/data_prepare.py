@@ -27,7 +27,7 @@ def prepare(labelfile,target_folder):
     #b['有车损', '没有车损']
     pbar = ProgressBar().start()
     total = len(files)
-    base_path = '/Users/liujunyi/Desktop/spottag/customer/联保/data'
+    base_path = 'toupdate'
     make_dirs(target_folder)
 
     split = int(total*0.7)
