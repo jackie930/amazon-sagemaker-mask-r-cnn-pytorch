@@ -23,5 +23,5 @@ phases:
 artifacts:
   files:
     - "**/*"
-  base-directory: $CODEBUILD_SRC_DIR/workshop/public/
+  base-directory: $CODEBUILD_SRC_DIR/workshop/docs/
   discard-paths: no
