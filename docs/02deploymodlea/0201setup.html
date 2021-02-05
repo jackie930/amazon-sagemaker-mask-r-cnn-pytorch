@@ -1,0 +1,114 @@
+<!doctype html><html class=no-js lang=en-us prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#"><html lang=en class="js csstransforms3d"><head><meta charset=utf-8><meta property="og:title" content="SpotBot Workshop"><meta property="og:type" content="website"><meta property="og:url" content><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name=generator content="Hugo 0.80.0"><meta name=description content="My AWS Workshop"><meta name=author content="Jane Architect"><link rel="shortcut icon" href=https://a0.awsstatic.com/libra-css/images/site/fav/favicon.ico type=image/ico><link rel=icon href=https://a0.awsstatic.com/libra-css/images/site/fav/favicon.ico type=image/ico><title>环境搭建和验证 :: SpotBot Workshop</title><link href=../css/nucleus.css rel=stylesheet><link href=../css/fontawesome-all.min.css rel=stylesheet><link href=../css/hybrid.css rel=stylesheet><link href=../css/featherlight.min.css rel=stylesheet><link href=../css/perfect-scrollbar.min.css rel=stylesheet><link href=../css/auto-complete.css rel=stylesheet><link href=../css/atom-one-dark-reasonable.css rel=stylesheet><link href=../css/theme.css rel=stylesheet><link href=../css/hugo-theme.css rel=stylesheet><link href=../css/theme-aws.css rel=stylesheet><script src=../js/jquery-3.3.1.min.js></script><style>:root #header+#content>#left>#rlblock_left{display:none!important}:not(pre)>code+span.copy-to-clipboard{display:none}</style></head><body data-url=../02deploymodlea/0201setup.html><nav id=sidebar class=showVisitedLinks><div id=header-wrapper><div id=header><div><a href=../ title="Go home"><img style=vertical-align:middle src=../images/logo.png height=70px></a></div></div><div class=searchbox><label for=search-by><i class="fas fa-search"></i></label><input data-search-input id=search-by type=search placeholder=Search...>
+<span data-search-clear><i class="fas fa-times"></i></span></div><script type=text/javascript src=../js/lunr.min.js></script><script type=text/javascript src=../js/auto-complete.js></script><script type=text/javascript>var baseurl="";</script><script type=text/javascript src=../js/search.js></script></div><div class=highlightable><ul class=topics><li data-nav-id=/01trainmodel.html title=模型训练 class=dd-item><a href=../01trainmodel.html><b>1. </b>模型训练
+<i class="fas fa-check read-icon"></i></a><ul><li data-nav-id=/01trainmodel/0101setup.html title=环境搭建 class=dd-item><a href=../01trainmodel/0101setup.html><b>1.1 </b>环境搭建
+<i class="fas fa-check read-icon"></i></a><ul><li data-nav-id=/01trainmodel/0101setup/010101jupyter.html title=创建SageMaker笔记本实例 class=dd-item><a href=../01trainmodel/0101setup/010101jupyter.html><b>4.1 </b>创建SageMaker笔记本实例
+<i class="fas fa-check read-icon"></i></a></li></ul></li><li data-nav-id=/01trainmodel/0103semanticbot.html title=模型训练 class=dd-item><a href=../01trainmodel/0103semanticbot.html><b>4.2</b> 模型训练
+<i class="fas fa-check read-icon"></i></a></li></ul></li><li data-nav-id=/02deploymodlea.html title="模型A 部署和使用" class="dd-item
+parent"><a href=../02deploymodlea.html><b>2. </b>模型A 部署和使用
+<i class="fas fa-check read-icon"></i></a><ul><li data-nav-id=/02deploymodlea/0201setup.html title=环境搭建和验证 class="dd-item
+parent
+active"><a href=../02deploymodlea/0201setup.html><b>2.1 </b>环境搭建和验证
+<i class="fas fa-check read-icon"></i></a></li></ul></li></ul><section id=prefooter><hr><ul><li><a class=padding href=# data-clear-history-toggle><i class="fas fa-history fa-fw"></i>Clear History</a></li></ul></section><section id=footer><left><h5 class=copyright>&copy; 2019 Amazon Web Services, Inc. or its Affiliates. All rights reserved.<h5></left></section></div></nav><section id=body><div id=overlay></div><div class="padding highlightable"><div><div id=top-bar><div id=breadcrumbs itemscope itemtype=http://data-vocabulary.org/Breadcrumb><span id=sidebar-toggle-span><a href=# id=sidebar-toggle data-sidebar-toggle><i class="fa fa-bars"></i></a></span><span class=links><a href=../>联保智能车损 datalab</a> > <a href=../02deploymodlea.html>模型A 部署和使用</a> > 环境搭建和验证</span></div></div></div><div id=chapter><div id=body-inner><h1>环境搭建和验证</h1><h4 id=ec2-环境准备>EC2 环境准备</h4><p>要完成本章节操作步骤，您需要准备一台EC2 实例：</p><ul><li>AMI : Deep Learning AMI (Ubuntu 18.04) Version 39.0 - ami-08773c85de0140def</li><li>实例类型： g4dn.xlarge （4C/16G）</li><li>存储: 150G</li></ul><h4 id=获取模型代码>获取模型代码</h4><p>登录已经启动的 EC2 实例，创建工作目录，并下载代码</p><pre><code>source activate pytorch_p36
+mkdir workshop
+cd workshop
+git clone https://github.com/jackie930/amazon-sagemaker-mask-r-cnn-pytorch
+</code></pre><h4 id=配置aksk>配置AK/SK</h4><p>使用“aws configure” 命令配置AK/SK</p><pre><code>aws configure
+AWS Access Key ID [None]: ********************
+AWS Secret Access Key [None]: ****************************************
+Default region name [None]: cn-northwest-1
+Default output format [None]:
+</code></pre><p><strong>注意</strong> 请将“*******” 替换为您AWS 帐号的Access Key ID 和 AWS Secret Access Key</p><h4 id=检查模型文件>检查模型文件</h4><p>检查一下两个模型文件(.pth) 是否已经存在</p><pre><code>ls -la *pth
+-rw-r--r-- 1 ubuntu ubuntu 178090079 Feb  2 23:31 maskrcnn_resnet50_fpn_coco-bf2d0c1e.pth
+-rw-r--r-- 1 ubuntu ubuntu  44793465 Feb  2 23:25 model.pth
+</code></pre><h4 id=修改dockerfile>修改Dockerfile</h4><p>如需要使用本地GPU EC2实例部署和使用模型A，需要修改Dockerfile</p><ol><li>修改gpu基础镜像：</li></ol><pre><code>ARG REGISTRY_URI
+# FROM ${REGISTRY_URI}/pytorch-inference:1.5.0-cpu-py36-ubuntu16.04
+FROM ${REGISTRY_URI}/pytorch-inference:1.5.0-gpu-py3
+</code></pre><ol start=2><li>增加以下安装命令：</li></ol><pre><code> RUN pip install torchvision GPUtil  -i https://opentuna.cn/pypi/web/simple
+</code></pre><ol start=3><li>修改复制内容</li></ol><pre><code>#COPY * /opt/program/
+COPY maskrcnn_resnet50_fpn_coco-bf2d0c1e.pth  /root/.cache/torch/checkpoints/maskrcnn_resnet50_fpn_coco-bf2d0c1e.pth
+COPY model.pth /opt/program/
+COPY predictor.py /opt/program/
+COPY serve.py /opt/program/
+COPY wsgi.py /opt/program/
+COPY nginx.conf /opt/program/
+WORKDIR /opt/program
+</code></pre><h4 id=修改模型代码>修改模型代码</h4><pre><code>import torchvision
+import PIL
+import codecs
+import copy
+import re
+import base64
+from io import BytesIO
+</code></pre><pre><code>    data = flask.request.data.decode('utf-8')
+    # data = json.loads(data)
+
+    # bucket = data['bucket']
+    # image_uri = data['image_uri']
+    
+    img_data = data
+
+    # download_file_name = image_uri.split('/')[-1]
+    # print (&quot;&lt;&lt;&lt;&lt;download_file_name &quot;, download_file_name)
+    # #download_file_name = './test.jpg'
+    # s3_client.download_file(bucket, image_uri, download_file_name)
+    # print('Download finished!')
+    # inference and send result to RDS and SQS
+
+    print('Start to inference:')
+
+    if torch.cuda.is_available():
+        print(&quot;==&gt; Using cuda&quot;)
+    else:
+        print(&quot;==&gt; Using cpu&quot;)
+
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+</code></pre><pre><code>    input_size = 224
+
+    trans2 = transforms.Compose([
+        transforms.Resize(input_size),
+        transforms.CenterCrop(input_size),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+
+    # image = PIL.Image.open(download_file_name)
+    img_data = data
+    image = base64_to_image(img_data)
+</code></pre><pre><code>def base64_to_image(base64_str, image_path=None):
+    base64_data = re.sub('^data:image/.+;base64,', '', base64_str)
+    byte_data = base64.b64decode(base64_data)
+    image_data = BytesIO(byte_data)
+    img = PIL.Image.open(image_data)
+    if image_path:
+        img.save(image_path)
+    return img
+</code></pre><h4 id=build-docker-image>Build Docker image</h4><pre><code>./build_local.sh
+</code></pre><p>执行成功后检查image 并启动容器</p><pre><code>docker images
+REPOSITORY                                                               TAG                          IMAGE ID       CREATED        SIZE
+car-filter                                                               latest                       44e85c202503   15 hours ago   9.54GB
+</code></pre><p>启动容器</p><pre><code>nvidia-docker  run -d -p 8080:8080 --env AWS_DEFAULT_REGION=cn-northwest-1 car-filter
+</code></pre><h4 id=数据准备>数据准备</h4><p>将模拟测试数据上传到 EC2 &ldquo;sample_20210202&rdquo; 目录</p><pre><code>find sample_20210202/
+sample_20210202/
+sample_20210202/标的定损-本田
+sample_20210202/标的定损-本田/现场查勘照片
+sample_20210202/标的定损-本田/现场查勘照片/外观照片 (10)29.jpg
+sample_20210202/标的定损-本田/现场查勘照片/内杠损失 (1)16.jpg
+sample_20210202/标的定损-本田/现场查勘照片/人车合影19.jpg
+....
+sample_20210202/三者定损-江铃江特
+sample_20210202/三者定损-江铃江特/现场查勘照片
+sample_20210202/三者定损-江铃江特/现场查勘照片/现场查勘照片15.jpg
+sample_20210202/三者定损-江铃江特/现场查勘照片/现场查勘照片10.jpg
+sample_20210202/三者定损-江铃江特/现场查勘照片/现场查勘照片14.jpg
+...
+</code></pre><p>创建输出目录 “output”</p><pre><code>mkdir output
+python create_output.py -input sample_20210202/ -output output/
+
+ls output/
+out_car  out_err1  out_err2  out_no_car  out_not_pic  out_parts
+
+
+</code></pre><h4 id=测试调用模型>测试调用模型</h4><pre><code>python run_filter.py  -input &quot;sample_20210202/&quot; -output &quot;output&quot; -api &quot;http://localhost:8080/invocations&quot;
+</code></pre><h4 id=导出--导入-image>导出 / 导入 image</h4><p>执行以下命令导出image</p><pre><code>docker save car-filter -o car-filter.tar
+</code></pre><p>将tar 文件复制到另一台服务器，执行以下命令，装载镜像</p><pre><code>docker load &lt; car-filter.tar
+</code></pre><footer class=footline></footer></div></div></div><div id=navigation><a class="nav nav-prev" href=../02deploymodlea.html title="模型A 部署和使用"><i class="fa fa-chevron-left"></i></a><a class="nav nav-next" href=../01trainmodel.html title=模型训练 style=margin-right:0><i class="fa fa-chevron-right"></i></a></div></section><div style=left:-1000px;overflow:scroll;position:absolute;top:-1000px;border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px><div style=border:none;box-sizing:content-box;height:200px;margin:0;padding:0;width:200px></div></div><script src=../js/clipboard.min.js></script><script src=../js/perfect-scrollbar.min.js></script><script src=../js/perfect-scrollbar.jquery.min.js></script><script src=../js/jquery.sticky.js></script><script src=../js/featherlight.min.js></script><script src=../js/html5shiv-printshiv.min.js></script><script src=../js/highlight.pack.js></script><script>hljs.initHighlightingOnLoad();</script><script src=../js/modernizr.custom-3.6.0.js></script><script src=../js/learn.js></script><script src=../js/hugo-learn.js></script><link href=../mermaid/mermaid.css rel=stylesheet><script src=../mermaid/mermaid.js></script><script>mermaid.initialize({startOnLoad:true});</script></body></html>
